@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "211189267610",
+    "firebase_url": "https://trial-bfc04-default-rtdb.firebaseio.com",
+    "project_id": "trial-bfc04",
+    "storage_bucket": "trial-bfc04.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211189267610:android:f182c1809664ee1204f323",
+        "android_client_info": {
+          "package_name": "com.example.trial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtWxQ5ud1iO4HqU_OK12q9XkZ9ycQ7jrc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
