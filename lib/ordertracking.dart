@@ -1,60 +1,55 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(FoodDeliveryApp());
-}
-
-class FoodDeliveryApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Food Delivery App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: OrderTrackingScreen(),
-    );
-  }
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrderTrackingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Dummy order data
-    List<Order> orders = [
-      Order(id: '1', status: 'Preparing', estimatedTime: '20 mins'),
-      Order(id: '2', status: 'On the way', estimatedTime: '5 mins'),
-      Order(id: '3', status: 'Delivered', estimatedTime: 'N/A'),
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Order Tracking'),
       ),
-      body: ListView.builder(
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return ListTile(
-            title: Text('Order ID: ${order.id}'),
-            subtitle: Text('Status: ${order.status} - ETA: ${order.estimatedTime}'),
+      body: StreamBuilder
+(
+        stream: FirebaseFirestore.instance
+            .collection('orders')
+            .where('user_id', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+
+          final orders = snapshot.data!.docs;
+
+          if (orders.isEmpty) {
+            return Center(
+              child: Text(
+                'No orders yet.',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              return ListTile(
+                title: Text('Order ID: ${order.id}'),
+                subtitle: Text('Status: ${order['status']} - ETA: ${order['estimated_time']}'),
+              );
+            },
           );
         },
       ),
     );
   }
-}
-
-// Model class for Order
-class Order {
-  final String id;
-  final String status;
-  final String estimatedTime;
-
-  Order({
-    required this.id,
-    required this.status,
-    required this.estimatedTime,
-  });
 }
