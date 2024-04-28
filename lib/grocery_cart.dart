@@ -74,3 +74,128 @@ class _GroceryCartPageState extends State<GroceryCartPage> {
       print('Error fetching items from Firestore: $error');
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Shopping Cart'),
+      ),
+      body: ListView.builder(
+        itemCount: _cartItems.length,
+        itemBuilder: (context, index) {
+          final restaurant = _cartItems[index]['restaurant'] as String;
+          final items = _cartItems[index]['items'] as List<Map<String, dynamic>>;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8.0,
+                  horizontal: 16.0,
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      restaurantImages[index], // Get the image path
+                      width: 40,
+                      height: 40,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      restaurant,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final foodItem = items[index]['foodItem'] as String;
+
+                  return ListTile(
+                    title: Text(foodItem),
+                    trailing: IconButton(
+                      icon: Icon(Icons.remove),
+                      onPressed: () {
+                        removeItem(
+                          restaurant,
+                          items[index]['id'] as String,
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              icon: Icon(Icons.home),
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.shopping_cart),
+              onPressed: () {
+                // Navigate to the grocery cart page
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.list),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OrderPage()),
+                );
+              },
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to the order page when submit button is clicked
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OrderPage()),
+                );
+              },
+              child: Text('Submit Order'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void removeItem(String restaurant, String documentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('fooditems')
+          .doc(documentId)
+          .delete();
+
+      setState(() {
+        _cartItems.forEach((element) {
+          if (element['restaurant'] == restaurant) {
+            List<Map<String, dynamic>> items = element['items'];
+            items.removeWhere((item) => item['id'] == documentId);
+          }
+        });
+      });
+    } catch (error) {
+      print('Error deleting item from Firestore: $error');
+    }
+  }
+}
