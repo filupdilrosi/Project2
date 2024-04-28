@@ -1,433 +1,168 @@
+// homepage.dart
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Firebase Authentication',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: AuthenticationScreen(),
-    );
-  }
-}
-
-class AuthenticationScreen extends StatefulWidget {
-  @override
-  _AuthenticationScreenState createState() => _AuthenticationScreenState();
-}
-
-class _AuthenticationScreenState extends State<AuthenticationScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Authentication'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  // Sign up with email and password
-                  await _auth.createUserWithEmailAndPassword(
-                    email: _emailController.text.trim(),
-                    password: _passwordController.text.trim(),
-                  );
-                  print('Signed up: ${_auth.currentUser!.email}');
-                } catch (e) {
-                  print('Failed to sign up: $e');
-                }
-              },
-              child: const Text('Sign Up'),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  // Sign in with email and password
-                  await _auth.signInWithEmailAndPassword(
-                    email: _emailController.text.trim(),
-                    password: _passwordController.text.trim(),
-                  );
-                  print('Signed in: ${_auth.currentUser!.email}');
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Homepage(user: _auth.currentUser!)),
-                  );
-                } catch (e) {
-                  print('Failed to sign in: $e');
-                }
-              },
-              child: const Text('Sign In'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+import 'food_options.dart'; // Import the food options file
+import 'restaurant_details.dart'; // Import the restaurant details page
+import 'grocery_cart.dart'; // Import the grocery cart page
+import 'order.dart'; // Import the order page
 
 class Homepage extends StatelessWidget {
   final User user;
 
   const Homepage({Key? key, required this.user}) : super(key: key);
 
+  // Define a getter to dynamically compute the list of restaurant names
+  List<String> get restaurants => foodOptions.keys.toList();
+
+  // Hard code the image paths for each restaurant
+  static const List<String> restaurantImages = [
+    'assets/one.png',
+    'assets/two.png',
+    'assets/three.png',
+    'assets/four.png',
+    'assets/five.png',
+    'assets/six.png',
+    'assets/seven.png',
+    'assets/eight.png',
+    'assets/nine.png',
+    'assets/ten.png',
+  ];
+
+  // Generate random ratings for each restaurant
+  Map<String, double> generateRandomRatings() {
+    Random random = Random();
+    return Map.fromIterable(restaurants, key: (restaurant) => restaurant, value: (_) => random.nextDouble() * 5);
+  }
+
   @override
   Widget build(BuildContext context) {
+    Map<String, double> restaurantRatings = generateRandomRatings();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todo List'),
+        title: const Text('Restaurants'),
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => AuthenticationScreen()),
-              );
             },
           ),
         ],
       ),
-      body: TodoList(user: user),
-    );
-  }
-}
-
-class TodoList extends StatefulWidget {
-  final User user;
-
-  const TodoList({Key? key, required this.user}) : super(key: key);
-
-  @override
-  _TodoListState createState() => _TodoListState();
-}
-
-class _TodoListState extends State<TodoList> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter todo title',
-                  ),
-                ),
+      body: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                'Restaurants',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _timeController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter time (e.g., 2:00 PM)',
-                  ),
-                ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: TextField(
-                  controller: _dateController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter date (e.g., Monday)',
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () {
-                  if (_titleController.text.isNotEmpty &&
-                      _timeController.text.isNotEmpty &&
-                      _dateController.text.isNotEmpty) {
-                    FirebaseFirestore.instance
-                        .collection('todos')
-                        .add({
-                      'title': _titleController.text,
-                      'time': _timeController.text,
-                      'date': _dateController.text,
-                      'completed': false,
-                      'user_id': widget.user.uid,
-                    })
-                        .then((value) {
-                      _titleController.clear();
-                      _timeController.clear();
-                      _dateController.clear();
-                    })
-                        .catchError(
-                            (error) => print("Failed to add todo: $error"));
-                  }
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: restaurants.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return GestureDetector(
+                    onTap: () {
+                      // Navigate to the restaurant details page when a restaurant is clicked
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RestaurantDetailsPage(
+                            restaurantName: restaurants[index],
+                            foodOptions: foodOptions[restaurants[index]]!, // Pass the food options map instead of a list
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: ListTile(
+                        title: Row(
+                          children: [
+                            Text(restaurants[index]),
+                            SizedBox(width: 8),
+                            _buildStarRating(restaurantRatings[restaurants[index]] ?? 0),
+                          ],
+                        ),
+                        // Container to hold background image
+                        leading: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(
+                              image: AssetImage(restaurantImages[index]), // Use the hardcoded image path
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
                 },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        SizedBox(height: 20),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('todos')
-                .where('user_id', isEqualTo: widget.user.uid)
-                .orderBy('date')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              }
-
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              }
-
-              final todos = snapshot.data!.docs;
-
-              if (todos.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'No todos yet.',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        'Tasks',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Completed Tasks',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(Icons.home),
+              onPressed: () {
+                // Navigate to the homepage when home button is tapped
+                Navigator.pushReplacementNamed(context, '/');
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.shopping_cart),
+              onPressed: () {
+                // Navigate to the grocery cart page when cart button is tapped
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => GroceryCartPage()),
                 );
-              }
-
-              List<Widget> todoWidgets = [];
-              List<Widget> completedTodoWidgets = [];
-
-              for (var todo in todos) {
-                ListTile tile = ListTile(
-                  title: Text(
-                    '${todo['title']} ${todo['date']} ${todo['time']}',
-                  ),
-                  leading: Checkbox(
-                    value: todo['completed'],
-                    onChanged: (value) {
-                      FirebaseFirestore.instance
-                          .collection('todos')
-                          .doc(todo.id)
-                          .update({'completed': value})
-                          .then((value) => print("Todo updated"))
-                          .catchError((error) =>
-                          print("Failed to update todo: $error"));
-                    },
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () {
-                          _editTodo(todo);
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () {
-                          FirebaseFirestore.instance
-                              .collection('todos')
-                              .doc(todo.id)
-                              .delete()
-                              .then((value) => print("Todo deleted"))
-                              .catchError((error) =>
-                              print("Failed to delete todo: $error"));
-                        },
-                      ),
-                    ],
-                  ),
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.list),
+              onPressed: () {
+                // Navigate to the order page when order button is tapped
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OrderPage()),
                 );
-
-                if (todo['completed']) {
-                  completedTodoWidgets.add(Container(
-                    color: Colors.orangeAccent,
-                    child: tile,
-                  ));
-                } else {
-                  todoWidgets.add(Container(
-                    color: Colors.lightBlueAccent,
-                    child: tile,
-                  ));
-                }
-              }
-
-              return ListView(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Tasks',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      ...todoWidgets,
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Completed Tasks',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      ...completedTodoWidgets,
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
+              },
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-  void _editTodo(DocumentSnapshot todo) {
-    _titleController.text = todo['title'];
-    _timeController.text = todo['time'];
-    _dateController.text = todo['date'];
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit Task'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: 'Enter todo title',
-                ),
-              ),
-              TextField(
-                controller: _timeController,
-                decoration: InputDecoration(
-                  hintText: 'Enter time (e.g., 2:00 PM)',
-                ),
-              ),
-              TextField(
-                controller: _dateController,
-                decoration: InputDecoration(
-                  hintText: 'Enter date (e.g., Monday)',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (_titleController.text.isNotEmpty &&
-                    _timeController.text.isNotEmpty &&
-                    _dateController.text.isNotEmpty) {
-                  FirebaseFirestore.instance
-                      .collection('todos')
-                      .doc(todo.id)
-                      .update({
-                    'title': _titleController.text,
-                    'time': _timeController.text,
-                    'date': _dateController.text,
-                  })
-                      .then((value) {
-                    Navigator.pop(context);
-                    _titleController.clear();
-                    _timeController.clear();
-                    _dateController.clear();
-                  })
-                      .catchError((error) =>
-                      print("Failed to update todo: $error"));
-                }
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
+  // Build star rating widget based on the given rating
+  Widget _buildStarRating(double rating) {
+    rating = max(rating, 3); // Ensure minimum rating of 3 stars
+    int starCount = rating.floor();
+    List<int> starList = List.generate(5, (index) => index + 1);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: starList.map((index) {
+        if (index <= starCount) {
+          return Icon(Icons.star, color: Colors.orange);
+        } else if (index - 1 < rating && rating < index) {
+          return Icon(Icons.star_half, color: Colors.orange);
+        } else {
+          return Icon(Icons.star_border, color: Colors.orange);
+        }
+      }).toList(),
     );
   }
 }
